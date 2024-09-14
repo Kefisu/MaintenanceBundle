@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <service id="maintenance.manager" class="Kefisu\Bundle\MaintenanceBundle\Service\FileBasedMaintenanceManager" autowire="true"/>
+
+        <service id="maintenance.listener" class="Kefisu\Bundle\MaintenanceBundle\EventListener\MaintenanceListener">
+            <tag name="kernel.event_subscriber"/>
+            <argument type="service" id="maintenance.manager"/>
+        </service>
+
+        <!-- commands -->
+        <service id="maintenance.disable_command" class="Kefisu\Bundle\MaintenanceBundle\Command\DisableCommand">
+            <tag name="console.command" />
+            <argument type="service" id="maintenance.manager"/>
+        </service>
+
+        <service id="maintenance.enable_command" class="Kefisu\Bundle\MaintenanceBundle\Command\EnableCommand">
+            <tag name="console.command" />
+            <argument type="service" id="maintenance.manager"/>
+        </service>
+
+        <service id="maintenance.status_command" class="Kefisu\Bundle\MaintenanceBundle\Command\StatusCommand">
+            <tag name="console.command" />
+            <argument type="service" id="maintenance.manager"/>
+        </service>
+    </services>
+</container>

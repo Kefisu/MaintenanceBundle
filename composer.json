@@ -1,0 +1,30 @@
+{
+    "name": "kefisu/maintenance-bundle",
+    "description": "A Symfony Bundle that allows you to put your application into maintenance mode.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kevin Jansen",
+            "email": "kevitius99@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.0",
+        "symfony/framework-bundle": "6.* || 7.*",
+        "symfony/console": "6.* || 7.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kefisu\\Bundle\\MaintenanceBundle\\": ""
+        }
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": true,
+            "require": "6.* || 7.*"
+        }
+    }
+}
