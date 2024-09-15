@@ -45,7 +45,9 @@ class MaintenanceListener implements EventSubscriberInterface
                 return;
             }
 
-            $response = new Response('Maintenance mode', 503);
+            $template = file_get_contents(__DIR__ . '/../../template/maintenance.html');
+
+            $response = new Response($template ?: 'Maintenance mode', 503);
 
             $data = $this->maintenanceManager->getData();
 
