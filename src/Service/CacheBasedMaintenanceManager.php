@@ -2,25 +2,24 @@
 
 namespace Kefisu\Bundle\MaintenanceBundle\Service;
 
-use JsonException;
 use Kefisu\Bundle\MaintenanceBundle\Contract\MaintenanceManagerInterface;
 use Kefisu\Bundle\MaintenanceBundle\Exception\MaintenanceModeAlreadyActiveException;
 use Kefisu\Bundle\MaintenanceBundle\Exception\MaintenanceModeNotActiveException;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Throwable;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Cache\InvalidArgumentException;
 
-class FileBasedMaintenanceManager implements MaintenanceManagerInterface
+class CacheBasedMaintenanceManager implements MaintenanceManagerInterface
 {
-    private string $filePath;
-
-    private static ?array $data = null;
-
-    public function __construct(string $filePath)
-    {
-        $this->filePath = sprintf('%s/maintenance', $filePath);
+    public function __construct(
+        private CacheItemPoolInterface $cache
+    ) {
     }
 
-    /** @inheritDoc */
+    /**
+     * @inheritDoc
+     *
+     * @throws InvalidArgumentException|\Random\RandomException
+     */
     public function enable(?int $duration = null, int $statusCode = 503): void
     {
         if ($this->isActive()) {
@@ -29,24 +28,25 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
             );
         }
 
-        file_put_contents(
-            $this->filePath,
-            json_encode([
+        $this->cache->save(
+            $this->cache->getItem('maintenance')->set([
                 'time' => time(),
                 'duration' => $duration,
                 'statusCode' => $statusCode,
                 'secret' => bin2hex(random_bytes(16)),
-            ], JSON_PRETTY_PRINT)
+            ])
         );
     }
 
-    /** @inheritDoc */
+    /**
+     * @inheritDoc
+     *
+     * @throws InvalidArgumentException
+     */
     public function disable(): void
     {
         if ($this->isActive()) {
-            unlink($this->filePath);
-
-            return;
+            $this->cache->deleteItem('maintenance');
         }
 
         throw new MaintenanceModeNotActiveException(
@@ -54,16 +54,18 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
         );
     }
 
-    /** @inheritDoc */
+    /**
+     * @inheritDoc
+     *
+     * @throws InvalidArgumentException
+     */
     public function isActive(): bool
     {
-        return file_exists($this->filePath);
+        return $this->cache->getItem('maintenance')->isHit();
     }
 
     /**
      * @inheritDoc
-     *
-     * @throws JsonException
      */
     public function getSecret(): ?string
     {
@@ -79,41 +81,26 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
     /**
      * @inheritDoc
      *
-     * @throws JsonException
+     * @throws InvalidArgumentException
      */
     public function getData(): array
     {
         if ($this->isActive() === false) {
             throw new MaintenanceModeNotActiveException(
-                message: 'Cannot get secret because maintenance mode is not active.'
+                message: 'Cannot get data because maintenance mode is not active.'
             );
         }
 
-        if (self::$data === null) {
-            $fileContent = file_get_contents($this->filePath);
-
-            if (is_string($fileContent)) {
-                /** @var array{time: int, duration: int|null, statusCode: int, secret: string} $data */
-                self::$data = json_decode($fileContent, true, 512, JSON_THROW_ON_ERROR);
-            }
-        }
-
-        return self::$data ?? [];
+        return $this->cache->getItem('maintenance')->get();
     }
 
     /**
      * @inheritDoc
-     *
-     * @throws JsonException
      */
     public function validateSecret(string $secret): bool
     {
         $storedSecret = $this->getSecret();
 
-        if (is_string($storedSecret)) {
-            return hash_equals($storedSecret, $secret);
-        }
-
-        return false;
+        return is_string($storedSecret) && hash_equals($storedSecret, $secret);
     }
 }

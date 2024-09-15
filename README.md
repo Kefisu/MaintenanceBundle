@@ -78,7 +78,9 @@ Any implementation of the `Kefisu\Bundle\MaintenanceBundle\Contract\MaintenanceM
 managing the maintenance mode status. The bundle provides a default implementation of this interface for:
 
 - `Kefisu\Bundle\MaintenanceBundle\Service\FileBasedMaintenanceManager` - reads and writes the maintenance mode status
-  to the filesystem. The status is stored in a file named `maintenance` in the project cache directory.
+  to the filesystem. The status is stored in a file named `maintenance` in the project cache directory. (Default)
+- `Kefisu\Bundle\MaintenanceBundle\Service\CacheBasedMaintenanceManager` - reads and writes the maintenance mode status
+  to the cache configured for your application. The status is stored in the cache with the key `maintenance`.
 
 ### Maintenance Listener
 
