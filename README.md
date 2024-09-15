@@ -21,6 +21,18 @@ return [
 ];
 ```
 
+## Configuration
+
+The bundle provides a default configuration that can be customized in your `config/packages/maintenance.yaml` file:
+
+```yaml
+maintenance:
+  maintenance_file_path: '%kernel.cache_dir%/maintenance'
+```
+
+- `maintenance_file_path` - the path to the file where the maintenance mode status is stored when using the file based storage.
+  By default, it writes to your system `tmp` directory
+
 ## Usage
 
 ### Enable maintenance mode

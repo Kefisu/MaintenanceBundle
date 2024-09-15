@@ -11,14 +11,13 @@ use Throwable;
 
 class FileBasedMaintenanceManager implements MaintenanceManagerInterface
 {
-    private string $cacheFileDir;
+    private string $filePath;
 
     private static ?array $data = null;
 
-    public function __construct(
-        #[Autowire('%kernel.cache_dir%')] private string $cacheDir,
-    ) {
-        $this->cacheFileDir = sprintf('%s/maintenance', $this->cacheDir);
+    public function __construct(string $filePath)
+    {
+        $this->filePath = sprintf('%s/maintenance', $filePath);
     }
 
     public function enable(?int $duration = null, int $statusCode = 503): void
@@ -30,7 +29,7 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
         }
 
         file_put_contents(
-            $this->cacheFileDir,
+            $this->filePath,
             json_encode([
                 'time' => time(),
                 'duration' => $duration,
@@ -43,7 +42,7 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
     public function disable(): void
     {
         if ($this->isActive()) {
-            unlink($this->cacheFileDir);
+            unlink($this->filePath);
 
             return;
         }
@@ -55,7 +54,7 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
 
     public function isActive(): bool
     {
-        return file_exists($this->cacheFileDir);
+        return file_exists($this->filePath);
     }
 
     /**
@@ -86,7 +85,7 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
         }
 
         if (self::$data === null) {
-            $fileContent = file_get_contents($this->cacheFileDir);
+            $fileContent = file_get_contents($this->filePath);
 
             if (is_string($fileContent)) {
                 /** @var array{time: int, duration: int|null, statusCode: int, secret: string} $data */
