@@ -64,8 +64,14 @@ class EnableCommand extends Command
                 return Command::FAILURE;
             }
 
+            if (!is_numeric($duration) && $duration !== null) {
+                $io->error('The duration must be a number.');
+
+                return Command::FAILURE;
+            }
+
             $this->maintenanceModeManager->enable(
-                duration: $duration ? (int) $duration : null,
+                duration: is_numeric($duration) ? (int) $duration : null,
                 statusCode: (int) $statusCode
             );
 
@@ -73,7 +79,7 @@ class EnableCommand extends Command
                 $io->success('Application is now in maintenance mode.');
 
                 $secret = $this->maintenanceModeManager->getSecret();
-                if ($secret) {
+                if (is_string($secret)) {
                     $io->success(sprintf("You may bypass maintenance mode via [%s].", $secret));
                 }
 

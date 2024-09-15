@@ -40,7 +40,7 @@ class MaintenanceListener implements EventSubscriberInterface
         if ($this->maintenanceManager->isActive()) {
             $request = $event->getRequest();
 
-            $secret = $request->get('secret');
+            $secret = $request->query->get('secret') ?? $request->headers->get('secret');
             if (is_string($secret) && $this->maintenanceManager->validateSecret($secret)) {
                 return;
             }
@@ -49,12 +49,16 @@ class MaintenanceListener implements EventSubscriberInterface
 
             $data = $this->maintenanceManager->getData();
 
-            if (empty($data['statusCode']) === false) {
+            if (is_int($data['statusCode'] ?? null)) {
                 $response->setStatusCode($this->maintenanceManager->getData()['statusCode']);
             }
 
-            if (empty($data['duration']) === false && empty($data['time']) === false) {
-                $response->headers->set('Retry-After', ($data['time'] + ($data['duration'] * 60) - time()));
+            if (is_int($data['duration'] ?? null) && is_int($data['time'] ?? null)) {
+                $tryAgainAfter = $data['time'] + ($data['duration'] * 60) - time();
+
+                if ($tryAgainAfter > 0) {
+                    $response->headers->set('Retry-After', (string) $tryAgainAfter);
+                }
             }
 
             $event->setResponse($response);

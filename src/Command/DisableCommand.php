@@ -21,8 +21,7 @@ class DisableCommand extends Command
 {
     public function __construct(
         private MaintenanceManagerInterface $maintenanceModeManager
-    )
-    {
+    ) {
         parent::__construct();
     }
 

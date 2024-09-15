@@ -9,7 +9,6 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 class MaintenanceExtension extends Extension
 {
-
     /**
      * @inheritDoc
      */

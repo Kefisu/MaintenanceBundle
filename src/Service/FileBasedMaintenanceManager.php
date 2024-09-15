@@ -2,22 +2,22 @@
 
 namespace Kefisu\Bundle\MaintenanceBundle\Service;
 
+use JsonException;
 use Kefisu\Bundle\MaintenanceBundle\Contract\MaintenanceManagerInterface;
 use Kefisu\Bundle\MaintenanceBundle\Exception\MaintenanceModeAlreadyActiveException;
 use Kefisu\Bundle\MaintenanceBundle\Exception\MaintenanceModeNotActiveException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Throwable;
 
 class FileBasedMaintenanceManager implements MaintenanceManagerInterface
 {
     private string $cacheFileDir;
 
-    /** @var array{time: int, duration: int|null, statusCode: int, secret: string} */
-    private static array $data;
+    private static ?array $data = null;
 
     public function __construct(
         #[Autowire('%kernel.cache_dir%')] private string $cacheDir,
-    )
-    {
+    ) {
         $this->cacheFileDir = sprintf('%s/maintenance', $this->cacheDir);
     }
 
@@ -59,7 +59,7 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
     public function getSecret(): ?string
     {
@@ -73,7 +73,9 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
+     *
+     * @inheritDoc
      */
     public function getData(): array
     {
@@ -83,18 +85,22 @@ class FileBasedMaintenanceManager implements MaintenanceManagerInterface
             );
         }
 
-        if (isset(self::$data) === false) {
-            self::$data = json_decode(file_get_contents($this->cacheFileDir), true, 512, JSON_THROW_ON_ERROR);
+        if (self::$data === null) {
+            $fileContent = file_get_contents($this->cacheFileDir);
+
+            if (is_string($fileContent)) {
+                /** @var array{time: int, duration: int|null, statusCode: int, secret: string} $data */
+                self::$data = json_decode($fileContent, true, 512, JSON_THROW_ON_ERROR);
+            }
         }
 
-        return self::$data;
+        return self::$data ?? [];
     }
 
     /**
-     * @throws \JsonException
+     * @throws JsonException
      */
-    public
-    function validateSecret(string $secret): bool
+    public function validateSecret(string $secret): bool
     {
         $storedSecret = $this->getSecret();
 
